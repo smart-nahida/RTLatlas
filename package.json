@@ -1,0 +1,83 @@
+{
+  "name": "rtl-atlas",
+  "version": "0.3.0",
+  "private": true,
+  "description": "A bilingual RTL exploration desktop application",
+  "author": "RTL Atlas",
+  "license": "MIT",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "desktop": "npm run build && electron .",
+    "desktop:dev": "electron . --dev",
+    "build": "tsc --noEmit && vite build --logLevel warn",
+    "test": "node --test tests/*.test.cjs && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test:ui": "npm run build && node scripts/ui-check.mjs",
+    "test:desktop": "npm run build && node scripts/desktop-check.mjs",
+    "test:waveform": "npm run build && node scripts/waveform-check.mjs",
+    "parser:bundle": "python3 -m PyInstaller --clean --noconfirm --onedir --name rtl-parser --collect-all pyslang --distpath build/parser --workpath build/pyinstaller backend/parse_rtl.py",
+    "dist:mac": "npm run build && npm run parser:bundle && electron-builder --mac dmg zip --publish never",
+    "dist:dir": "npm run build && electron-builder --dir --publish never",
+    "preview:export": "npm run build && node scripts/export-preview.mjs"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^1.1.8",
+    "@fontsource/noto-sans-sc": "^5.3.1",
+    "@xyflow/react": "12.12.0",
+    "lucide-react": "^0.468.0",
+    "prismjs": "^1.30.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/dagre": "^0.7.53",
+    "@types/prismjs": "^1.26.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "latest",
+    "electron": "44.8.0",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.9.3",
+    "vite": "8.3.4"
+  },
+  "build": {
+    "appId": "dev.rtlatlas.desktop",
+    "productName": "RTL Atlas",
+    "asar": true,
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "shared/**/*",
+      "package.json",
+      "LICENSE",
+      "docs/Noto-Sans-SC-OFL.txt"
+    ],
+    "extraResources": [
+      {
+        "from": "build/parser/rtl-parser",
+        "to": "parser"
+      },
+      {
+        "from": "examples",
+        "to": "examples"
+      }
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "identity": "-",
+      "minimumSystemVersion": "13.0"
+    },
+    "dmg": {
+      "title": "RTL Atlas"
+    }
+  }
+}

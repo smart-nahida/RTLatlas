@@ -1,0 +1,3 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const path=require('node:path');const {parseProject}=require('../electron/project.cjs');
+test('desktop process bridge parses real project with elaborated instances',async()=>{const p=await parseProject(path.join(__dirname,'..','examples','vector_accelerator'));assert.equal(p.roots[0],'top');assert.ok(p.instances['top.u_accelerator.g_core[2].u_core.u_accumulator']);assert.match(p.files['design.sv'],/always_ff/);});
+test('missing folder fails with parser diagnostic',async()=>{await assert.rejects(parseProject('/no/such/project'),/不存在|does not exist/);});

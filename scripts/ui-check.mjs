@@ -1,0 +1,43 @@
+import {spawn} from 'node:child_process';
+import {chromium} from '@playwright/test';import assert from 'node:assert/strict';import fs from 'node:fs/promises';
+const server=process.env.ATLAS_TEST_URL?null:spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','4173'],{stdio:'ignore'});
+const url=process.env.ATLAS_TEST_URL||'http://127.0.0.1:4173';
+for(let i=0;!url.startsWith('file:')&&i<50;i++){try{if((await fetch(url)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1580,height:1000},deviceScaleFactor:1});
+const errors=[];page.on('pageerror',error=>errors.push(error.message));
+await fs.mkdir('artifacts',{recursive:true});
+try{
+ await page.goto(url);
+ await page.locator('.react-flow__node').first().waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(200);await page.screenshot({path:'artifacts/v02-initial.png'});
+ assert.ok(await page.locator('.react-flow__node').count()>=6,'real example nodes rendered');
+ await page.getByRole('button',{name:'EN',exact:true}).click();
+ assert.equal(await page.locator('.section-label').first().textContent(),'Modules');
+ await page.reload();await page.getByRole('button',{name:'Open project',exact:true}).waitFor();
+ const accumulator=page.locator('.react-flow__node').filter({has:page.locator('header strong',{hasText:'u_accumulator'})});
+ assert.equal(await page.locator('.reading-history,.path-panel,.selection-details,.graph-options').count(),0,'default UI hides supplementary panels and hints');
+ assert.equal(await page.locator('.wordmark').textContent(),'RTL Atlas');
+ await accumulator.click();await page.locator('.inspector[data-selection="u_accumulator"]').waitFor();
+ assert.match(await page.locator('.source-table').textContent(),/acc_reg <= acc_reg \+ product/);
+ await page.getByRole('button',{name:'Parameters',exact:true}).click();assert.match(await page.locator('.param-table').textContent(),/W32/);
+ await page.getByRole('button',{name:'Ports',exact:true}).click();assert.match(await page.locator('.port-table').textContent(),/product/);
+ await page.getByRole('button',{name:'Source',exact:true}).click();
+ await page.getByRole('button',{name:'Display options',exact:true}).click();await page.getByRole('checkbox',{name:'Control',exact:true}).uncheck();
+ const clockBox=page.getByRole('checkbox',{name:'Clock / reset',exact:true});await clockBox.check();await page.locator('.react-flow__edge[aria-label^="clk:"]').first().waitFor();assert.ok(await page.locator('.react-flow__edge[aria-label^="clk:"]').count()>0,'clock visibility is independent of control toggle');await clockBox.uncheck();await page.getByRole('button',{name:'Display options',exact:true}).click();
+ await page.getByRole('button',{name:'Trace upstream',exact:true}).click();assert.ok(await page.locator('.dimmed').count()>0,'trace fades unrelated nodes');
+ await page.getByRole('button',{name:'Clear trace',exact:true}).click();
+ await page.getByRole('button',{name:'中文',exact:true}).click();
+ await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(350);await page.screenshot({path:'artifacts/rtl-atlas-zh.png'});
+ await accumulator.dblclick();await page.waitForTimeout(350);assert.match(await page.locator('.breadcrumbs').textContent(),/u_accumulator/);assert.ok(await page.locator('.react-flow__node .node-type').filter({hasText:'AlwaysFF'}).count()>0);
+ await page.screenshot({path:'artifacts/rtl-atlas-logic.png'});
+ await page.getByRole('button',{name:'返回上层',exact:true}).click();
+ const search=page.getByRole('textbox',{name:'搜索模块、实例或信号…'});await search.fill('u_mac_array');await page.locator('.search-results button').first().click();assert.equal(await page.locator('.inspector').getAttribute('data-selection'),'u_mac_array');
+ await page.getByRole('button',{name:'EN',exact:true}).click();
+ await page.getByRole('button',{name:'AI reading assistant',exact:true}).click();
+ await page.getByRole('button',{name:'Save configuration',exact:true}).click();
+ assert.match(await page.locator('.assistant-notice').textContent(),/desktop/);
+ await page.locator('.assistant-header').getByRole('button',{name:'Close',exact:true}).click();
+ await page.getByRole('button',{name:'Open project',exact:true}).click();await page.getByRole('dialog').waitFor();assert.match(await page.getByRole('alert').textContent(),/desktop app/);await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click();
+await page.getByRole('button',{name:'Collapse modules',exact:true}).click();assert.equal(await page.locator('.tree-scroll').count(),0);await page.getByRole('button',{name:'Show modules',exact:true}).click();await page.locator('.tree-scroll').waitFor();
+ assert.deepEqual(errors,[]);console.log('PASS: locale persistence, selection/source, parameters/ports, trace, drilldown, search, configurable API UI, import help; no page errors.');
+}catch(e){await page.screenshot({path:'artifacts/failure.png'});throw e;}finally{await browser.close();server?.kill();}
