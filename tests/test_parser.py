@@ -18,6 +18,20 @@ module top(input logic [15:0] x,output wire [15:0] y); for(genvar k=0;k<2;k++)be
         for id in ids:self.assertEqual(p['instances'][id]['ports'][0]['width'],16)
         self.assertTrue(any(e['signal']=='x' for e in top['graph']['edges']))
         self.assertTrue(any(e['signal']=='y' for e in top['graph']['edges']))
+    def test_type_parameters_keep_resolved_types_and_value_parameters(self):
+        p=self.parse("""module typed #(parameter type T=logic[7:0], parameter W=4)(input T a,output T b);assign b=a;endmodule
+module top(input logic[7:0] a,input logic[15:0] wide,output logic[7:0] y,output logic[15:0] z);
+ typed u_default(.a(a),.b(y));
+ typed #(.T(logic[15:0]),.W(16)) u_wide(.a(wide),.b(z));
+endmodule""",top='top')
+        small=p['instances']['top.u_default'];wide=p['instances']['top.u_wide']
+        self.assertEqual(small['parameters']['T'],'logic[7:0]')
+        self.assertEqual(wide['parameters']['T'],'logic[15:0]')
+        self.assertEqual(small['parameters']['W'],'4')
+        self.assertEqual(wide['parameters']['W'],'16')
+        self.assertEqual(small['ports'][0]['width'],8)
+        self.assertEqual(wide['ports'][0]['width'],16)
+
     def test_block_dependencies_sequential_boundary(self):
         p=self.parse('''module top(input logic clk,en,input logic[7:0] a,output logic[7:0] b);
 logic[7:0] r; always_ff @(posedge clk) if(en)r<=r+a; assign b=r; endmodule''')

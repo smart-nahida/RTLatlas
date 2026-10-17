@@ -9,8 +9,8 @@ if ! command -v node >/dev/null || ! command -v python3 >/dev/null; then
 fi
 if [[ ! -d .venv ]]; then python3 -m venv .venv; fi
 source .venv/bin/activate
-if ! python -c 'import pyslang; assert pyslang.__version__ == "11.0.0"' 2>/dev/null; then
-  python -m pip install 'pyslang==11.0.0'
+if ! python -c 'import pyslang, yaml; assert pyslang.__version__ == "11.0.0"' 2>/dev/null; then
+  python -m pip install -r backend/requirements.txt
 fi
 if [[ ! -f node_modules/.bin/vite ]]; then npm ci --no-audit --no-fund; fi
 # Retry a previously interrupted runtime download without reinstalling dependencies.

@@ -3,46 +3,32 @@ import json, os, re, shlex, sys
 from pathlib import Path
 import pyslang as sv
 
-class ProjectError(Exception):
-    pass
+from project_config import ProjectError, ProjectChoice, load_config, MAX_BYTES
 
-MAX_FILES=3000
 MAX_INSTANCES=12000
-MAX_BYTES=60*1024*1024
-SKIP={'.git','node_modules','build','dist','.venv','venv','release'}
 
-def parse_project(root: str) -> dict:
+def parse_project(root: str, selection=None) -> dict:
     root=Path(root).resolve()
     if not root.is_dir():raise ProjectError('Project folder does not exist / 工程目录不存在')
-    config_path=root/'atlas.project.json'
-    try: cfg=json.loads(config_path.read_text()) if config_path.exists() else {}
-    except (ValueError,OSError) as e:raise ProjectError(f'Invalid atlas.project.json: {e}') from e
-    if not isinstance(cfg,dict):raise ProjectError('atlas.project.json must be an object')
-    for field in ['files','includeDirs','defines']:
-        if field in cfg and (not isinstance(cfg[field],list) or any(not isinstance(x,str) for x in cfg[field])):
-            raise ProjectError(f'{field} must be an array of strings')
-    if 'top' in cfg and not isinstance(cfg['top'],str):raise ProjectError('top must be a string')
-    if cfg.get('files') is not None:
-        paths=[(root/p).resolve() for p in cfg['files']]
-    else:
-        paths=[]
-        for base, dirs, files in os.walk(root):
-            dirs[:]=sorted(d for d in dirs if d not in SKIP and not d.startswith('.'))
-            paths.extend(Path(base)/f for f in sorted(files) if f.endswith(('.v','.sv')))
-            if len(paths)>MAX_FILES:raise ProjectError('Too many source files; use atlas.project.json')
-    if not paths:raise ProjectError('No .v/.sv files found / 未找到 RTL 文件')
-    if len(paths)>MAX_FILES:raise ProjectError('Source file limit exceeded')
-    for p in paths:
-        if not p.is_file():raise ProjectError(f'Source file not found: {p}')
-    if sum(p.stat().st_size for p in paths)>MAX_BYTES:raise ProjectError('Source size limit exceeded (60 MiB)')
+    cfg=load_config(root,selection)
+    paths=[Path(p) for p in cfg['files']]
     driver=sv.driver.Driver();driver.addStandardArgs();driver.setTerminalColorsEnabled(False)
     args=['slang']
     if cfg.get('top'):args+=['--top',cfg['top']]
     args += ['-I'+str((root/p).resolve()) for p in cfg.get('includeDirs',[])]
     args += ['-D'+d for d in cfg.get('defines',[])]
-    args += [str(p) for p in paths]
-    if not driver.parseCommandLine(shlex.join(args)) or not driver.processOptions() or not driver.parseAllSources():
+    args += ['-G'+p for p in cfg.get('parameters',[])]
+    args += ['-y'+p for p in cfg.get('libraryDirs',[])]
+    if cfg.get('libraryExtensions'):args += ['+libext+'+'+'.join(cfg['libraryExtensions'])]
+    unit_files={p for u in cfg.get('units',[]) for p in u['files']}
+    args += [str(p) for p in paths if str(p) not in unit_files and str(p) not in cfg.get('libraryFiles',[])]
+    if not driver.parseCommandLine(shlex.join(args)):
         raise ProjectError(driver.textDiagClient.getString() or 'Unable to parse project options / 解析配置失败')
+    for unit in cfg.get('units',[]):
+        driver.sourceLoader.addSeparateUnit(unit['files'],unit['includeDirs'],unit['defines'],'',[])
+    for library in cfg.get('libraryFiles',[]):driver.sourceLoader.addLibraryFiles('',library)
+    if not driver.processOptions():raise ProjectError(driver.textDiagClient.getString() or 'Unable to process project options')
+    if not driver.parseAllSources():raise ProjectError(driver.textDiagClient.getString() or 'Unable to parse sources')
     compilation=driver.createCompilation(); compiled_root=compilation.getRoot()
     diags=list(compilation.getAllDiagnostics())
     diagnostics=sv.DiagnosticEngine.reportAll(compilation.sourceManager,diags)
@@ -119,7 +105,7 @@ def parse_project(root: str) -> dict:
             expr=str(ex.syntax).strip() if ex is not None and ex.syntax else ''
             direction={'In':'in','Out':'out','InOut':'inout','Ref':'inout'}.get(p.direction.name,'inout')
             ports.append({'name':p.name,'direction':direction,'width':int(p.type.bitWidth),'refs':refs(ex),'expression':expr,'source':source(p), 'internalId':p.internalSymbol.hierarchicalPath if p.internalSymbol else ''})
-        params={p.name:str(p.value) for p in i.body.parameters}
+        params={p.name:str(p.targetType.type if isinstance(p,sv.ast.TypeParameterSymbol) else p.value) for p in i.body.parameters}
         inst={'id':id,'name':id.rsplit('.',1)[-1], 'module':i.definition.name,'parent':parent,'children':[],'ports':ports,'parameters':params,'source':source(i.definition),'instanceSource':source(i),'graph':{'nodes':[],'edges':[]}}
         instances[id]=inst
         nodes=inst['graph']['nodes']
@@ -177,12 +163,12 @@ def parse_project(root: str) -> dict:
     roots=[instance(i) for i in compiled_root.topInstances]
     for p in paths:files.setdefault(relative(p),p.read_text(errors='replace'))
     if not roots:raise ProjectError('No top modules / 未找到顶层模块')
-    return {'version':1,'project':cfg.get('name',root.name),'root':str(root),'roots':roots,'instances':instances,'files':files,'diagnostics':diagnostics,'notes':['Conservative block dependencies; slices share their base signal. Interfaces/modports are shown without inferred edges.']}
+    return {'version':1,'project':cfg.get('name',root.name),'root':str(root),'roots':roots,'instances':instances,'files':files,'diagnostics':diagnostics,'importConfig':{k:cfg[k] for k in ('projectFile','target') if k in cfg},'notes':['Conservative block dependencies; slices share their base signal. Interfaces/modports are shown without inferred edges.']}
 
 if __name__=='__main__':
     try:
         req=json.load(sys.stdin)
-        result=parse_project(req['root'])
+        result=parse_project(req['root'],req.get('selection'))
         print(json.dumps({'ok':True,'project':result},ensure_ascii=False))
     except Exception as e:
-        print(json.dumps({'ok':False,'error':str(e)},ensure_ascii=False));sys.exit(1)
+        print(json.dumps({'ok':False,'error':str(e),**({'choices':e.choices} if isinstance(e,ProjectChoice) else {})},ensure_ascii=False));sys.exit(1)

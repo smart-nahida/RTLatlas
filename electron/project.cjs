@@ -1,5 +1,5 @@
 const {spawn}=require('node:child_process');const path=require('node:path');
-function parseProject(root,{packaged=false,resourcesPath='',python=process.env.RTL_ATLAS_PYTHON||'python3'}={}){
+function parseProject(root,{packaged=false,resourcesPath='',python=process.env.RTL_ATLAS_PYTHON||'python3',selection={}}={}){
  return new Promise((resolve,reject)=>{
   const command=packaged?path.join(resourcesPath,'parser',process.platform==='win32'?'rtl-parser.exe':'rtl-parser'):python;
   const args=packaged?[]:[path.join(__dirname,'..','backend','parse_rtl.py')];
@@ -10,8 +10,8 @@ function parseProject(root,{packaged=false,resourcesPath='',python=process.env.R
   p.stdin.on('error',()=>{});p.once('error',e=>finish(Error(`Parser unavailable / 解析器不可用: ${e.message}`)));
   p.stdout.on('data',x=>{out+=x;if(out.length>100*1024*1024){p.kill();finish(Error('Parser output too large / 工程过大'));}});
   p.stderr.on('data',x=>err=(err+x).slice(-16000));
-  p.once('close',()=>{if(settled)return;try{const result=JSON.parse(out);result.ok?finish(null,result.project):finish(Error(result.error));}catch{finish(Error(err||'Invalid parser response / 解析器输出无效'));}});
-  p.stdin.end(JSON.stringify({root}));
+  p.once('close',()=>{if(settled)return;try{const result=JSON.parse(out);result.ok?finish(null,result.project):finish(Object.assign(Error(result.error),result.choices?{choices:result.choices}:{}));}catch{finish(Error(err||'Invalid parser response / 解析器输出无效'));}});
+  p.stdin.end(JSON.stringify({root,selection}));
  });
 }
 module.exports={parseProject};

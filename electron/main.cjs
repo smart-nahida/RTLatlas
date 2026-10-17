@@ -12,9 +12,21 @@ const dev=process.argv.includes('--dev');
 const assistant=new AssistantClient(event=>{if(win&&!win.isDestroyed())win.webContents.send('assistant:event',event);},{fetchImpl:(url,options)=>net.fetch(url,options)});
 const settings=()=>new AssistantSettings(path.join(app.getPath('userData'),'api-settings.json'),safeStorage);
 async function demoRoot(){const source=path.join(app.isPackaged?process.resourcesPath:path.join(__dirname,'..'),'examples','vector_accelerator');return app.isPackaged?require('./demo-project.cjs').writableDemo(source,path.join(app.getPath('userData'),'demo-project')):source;}
-async function load(root){
+async function load(root,selection={}){
  if(projectBusy||assistant.busy)throw Error('Please finish the active operation / 请先完成当前操作');
- projectBusy=true;try{const candidate=await parseProject(root,{packaged:app.isPackaged,resourcesPath:process.resourcesPath});project=candidate;projectTools=new ProjectTools(project,{onWaveform:waveform=>sendEvent({type:'waveform',waveform}),onFile:({file,content})=>{project.files[file]=content;sendEvent({type:'file',file,content});}});assistant.resetConversation();return project;}finally{projectBusy=false;}
+ projectBusy=true;try{let candidate;
+  for(let attempt=0;attempt<8;attempt++){
+   try{candidate=await parseProject(root,{packaged:app.isPackaged,resourcesPath:process.resourcesPath,selection});break;}
+   catch(error){
+    if(!Array.isArray(error.choices)||!error.choices.length)throw error;
+    const choices=error.choices;
+    const {response}=await dialog.showMessageBox(win,{type:'question',title:'RTL Atlas',message:error.message,buttons:[...choices.map(c=>c.label),'Cancel / 取消'],cancelId:choices.length,noLink:true});
+    if(response>=choices.length)return null;
+    selection={...selection,...choices[response].selection};
+   }
+  }
+  if(!candidate)throw Error('Too many project selections / 工程选择过多，请使用 atlas.project.json 指定目标');
+  project=candidate;projectTools=new ProjectTools(project,{onWaveform:waveform=>sendEvent({type:'waveform',waveform}),onFile:({file,content})=>{project.files[file]=content;sendEvent({type:'file',file,content});}});assistant.resetConversation();return project;}finally{projectBusy=false;}
 }
 function handle(channel,fn){ipcMain.handle(channel,async(event,...args)=>{
  if(!win||event.sender!==win.webContents||event.senderFrame!==win.webContents.mainFrame)throw Error('Invalid IPC sender');
@@ -22,7 +34,7 @@ function handle(channel,fn){ipcMain.handle(channel,async(event,...args)=>{
 });}
 handle('project:open',async()=>{const selected=await dialog.showOpenDialog(win,{title:'Open RTL project / 打开 RTL 工程',defaultPath:location('project').read(),properties:['openDirectory']});if(selected.canceled)return null;rememberLocation('project',selected.filePaths[0]);return load(selected.filePaths[0]);});
 handle('project:demo',async()=>load(await demoRoot()));
-handle('project:reload',async()=>{requireProject();return load(project.root);});
+handle('project:reload',async()=>{requireProject();return load(project.root,project.importConfig||{});});
 function requireProject(){if(!project)throw Error('Open a project first / 请先打开工程');}
 function idle(){if(assistant.busy)throw Error('Stop the current question first / 请先停止问答');}
 handle('assistant:settings',()=>settings().public());

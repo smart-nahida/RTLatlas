@@ -49,7 +49,7 @@ The build uses ad-hoc signing, not an Apple Developer ID or notarization. Public
 
 ## 导入 RTL / Import a project
 
-点击“打开工程”，选择包含 `.v` / `.sv` 的文件夹。默认扫描源码并让编译器发现顶层；跳过 `.git`、node_modules、build、dist、release 和虚拟环境。
+点击“打开工程”，选择**工程根目录**。优先读取根目录的工程清单；存在多个清单或构建目标时弹窗选择。没有清单时才扫描 `.v` / `.sv` 并让编译器发现顶层；跳过 `.git`、node_modules、build、dist、release、obj_dir 和虚拟环境。
 
 复杂工程请在所选目录放置 `atlas.project.json`：
 
@@ -63,7 +63,27 @@ The build uses ad-hoc signing, not an Apple Developer ID or notarization. Public
 }
 ```
 
-`files` 保留顺序；路径相对工程目录，也支持绝对路径。头文件通过 include 引用，不需要重复列入 files。配置不是 shell 脚本。当前不直接读取厂商工程文件、Tcl 构建脚本或 `.f` filelist。编译失败时展示原始诊断，并保留之前的有效工程。修复源码 / 配置后点“重新解析”。
+`files` 保留顺序并优先于自动清单发现；路径相对工程目录，也支持绝对路径。头文件通过 include 引用，不需要重复列入 files。编译失败或取消选择时保留之前的有效工程，重新解析保留本次选中的清单和目标。
+
+可读取以下工程元数据（不启动厂商工具、不执行 Tcl/Makefile、不会下载缺失 IP）：
+
+| 格式 | 支持范围 |
+| --- | --- |
+| `.f` / `.flist` | 有序文件、嵌套 `-f/-F`、`+incdir+`、`+define+`、`-I/-D`、顶层、`-y/-v/+libext+`；支持引号、注释和已存在的环境变量 |
+| Quartus `.qpf/.qsf/.qip` | revision、源文件、SEARCH_PATH、VERILOG_MACRO、TOP_LEVEL_ENTITY、嵌套 QIP 的静态路径 |
+| Vivado `.xpr` | DesignSrcs 文件集、启用的设计源码、头文件目录、宏、顶层与 Generic 参数覆盖；忽略仿真文件集与约束文件；全局预包含头文件需先转换为显式 include |
+| `project.tcl` / `sources.tcl` / `files.tcl` | 静态的 set、source、read_verilog、add_files、set_property top/include_dirs/verilog_define/generic；动态脚本需要导出静态清单 |
+| FuseSoC `.core` | 本地 filesets、target、toplevel、头文件、vlogdefine 参数及能按精确 VLNV 找到的本地依赖；条件表达式、生成器、复杂版本依赖需要 FuseSoC 导出的 `.eda.yml` |
+| Bender `Bender.yml` | 有序 sources、嵌套分组、target 的 all/any/not、分组宏与 include、本地 path 依赖；git/version 依赖需先用 Bender 解析后导出文件清单 |
+| FuseSoC / Edalize `.eda.yml` | 已解析依赖的 files、include、vlogdefine、toplevel；不支持 vlogparam 覆盖，需提供 RTL wrapper |
+
+`.f` 内的相对路径以所选工程根目录为基准；`-f` 保持该基准，`-F` 切换到被引用清单所在目录。初次读取根目录的 `.f` 也以工程根目录为基准。未定义路径变量、缺文件、循环引用和不支持的编译选项会直接报错，不会回退扫描而掩盖问题。
+
+需要固定选择时，在 `atlas.project.json` 中使用 `{"projectFile":"files.f","top":"my_top","defines":["SYNTHESIS"]}`；`includeDirs` 和 `defines` 追加到清单设置，`top` 覆盖清单值。FuseSoC 的 target 或 Quartus 的 revision 可写为 `target`；Bender 可用逗号分隔多个启用目标，例如 `"target":"synthesis,asic"`。不填 `files` 才会读取 `projectFile`。
+
+FuseSoC `tools`、EDAM `tool_options/flow_options` 中的工具专属设置不能直接忽略：需先将相关宏、include 和目标转换为明确的 Atlas 配置或静态清单。
+
+纯 VHDL、混合语言、加密 IP 和未生成的厂商 IP 不属于当前解析器支持范围。动态 Tcl、FuseSoC 生成器和远程依赖应先由原构建工具生成 RTL 与静态文件清单；不能仅凭文件夹里存在 `.sv` 就保证完整导入。
 
 Large projects: v0.1 limits source inputs to 3,000 files / 60 MiB, elaborated instances to 12,000, parser execution to 90 seconds. A graph scope above 250 nodes is not rendered; navigate into a smaller module.
 
@@ -92,6 +112,7 @@ slang 负责语法、类型、名字解析、参数求值和 elaboration；图�
 
 ```bash
 npm test                 # Node process tests + real pyslang tests
+npm run test:imports     # Native manifest/target choice + reload/cancel integration
 npm run test:ui          # TypeScript production build + headless browser interaction checks
 npm run parser:bundle    # Standalone native parser for the current host
 ```
