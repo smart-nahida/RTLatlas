@@ -7,6 +7,12 @@ import fs from 'node:fs/promises';import os from 'node:os';import path from 'nod
 const testData=await fs.mkdtemp(path.join(os.tmpdir(),'atlas-desktop-api-'));
 const requests=[];
 const server=http.createServer(async(req,res)=>{let body='';for await(const chunk of req)body+=chunk;const input=JSON.parse(body);requests.push({input,authorization:req.headers.authorization,url:req.url});
+ if(input.messages.at(-1).content.includes('QUESTION: markdown regression')){
+  const markdown=['## 结论','','`top` 是 **数据包路由器**。查看 `design.sv:62` 或 [模块源码](design.sv#L66)。','','- 接收数据','- 转发输出','','| 信号 | 说明 |','| --- | --- |','| valid | 数据有效 |','','```systemverilog','assign in_ready = route ? ready1 : ready0;','// design.sv:62 stays literal inside a code block','```','','<script>window.markdownInjected=true</script>','[unsafe](javascript:alert(1))','![remote](https://example.invalid/pixel.png)'].join('\n');
+  res.writeHead(200,{'Content-Type':'text/event-stream'});
+  for(const content of [markdown.slice(0,20),markdown.slice(20)])res.write('data: '+JSON.stringify({choices:[{delta:{content}}]})+'\n\n');
+  res.end('data: [DONE]\n\n');return;
+ }
  if(input.messages.at(-1).content.includes('QUESTION: fail')){res.writeHead(401,{'Content-Type':'application/json'});res.end('{"error":{"message":"test rejected"}}');return;}
  if(input.messages.at(-1).content.includes('QUESTION: scroll regression')){
   res.writeHead(200,{'Content-Type':'text/event-stream'});
@@ -135,6 +141,17 @@ try{
  await page.getByRole('button',{name:'Send',exact:true}).click();
  await expect(page.locator('.message.assistant').last()).toContainText('Connected API');
  assert.ok(requests[1].input.messages.some(message=>message.role==='assistant'),'follow-up keeps conversation');
+ await page.getByRole('textbox',{name:'Ask about this module or data path…'}).fill('markdown regression');await page.getByRole('button',{name:'Send',exact:true}).click();
+ const markdownAnswer=page.locator('.message.assistant').last();
+ await expect(markdownAnswer.locator('h2')).toHaveText('结论');await expect(markdownAnswer.locator('strong')).toHaveText('数据包路由器');
+ assert.equal(await markdownAnswer.locator('ul li').count(),2);await expect(markdownAnswer.locator('table tbody td').first()).toHaveText('valid');
+ await expect(markdownAnswer.locator('pre code')).toContainText('assign in_ready');
+ assert.equal(await markdownAnswer.locator('pre .citation').count(),0,'code blocks remain literal');
+ await markdownAnswer.locator('.citation').filter({hasText:'design.sv:62'}).click();await expect(page.locator('.source-table tr.in-range').first()).toHaveAttribute('data-line','62');
+ await markdownAnswer.getByRole('button',{name:'模块源码',exact:true}).click();await expect(page.locator('.source-table tr.in-range').first()).toHaveAttribute('data-line','66');
+ assert.equal(await markdownAnswer.locator('script,img,a[href^="javascript:"]').count(),0,'markdown cannot inject scripts, unsafe URLs or remote image fetches');
+ assert.equal(await page.evaluate(()=>window.markdownInjected),undefined);
+
  await page.getByRole('textbox',{name:'Ask about this module or data path…'}).fill('fail');
  await page.getByRole('button',{name:'Send',exact:true}).click();
  await expect(page.locator('.message.assistant').last()).toContainText('401');

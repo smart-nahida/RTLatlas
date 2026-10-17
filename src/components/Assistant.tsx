@@ -1,4 +1,5 @@
-import {useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState} from 'react';
+import MarkdownMessage from './MarkdownMessage';
 import {Sparkles,X,ArrowUp,Square,Settings2,Trash2} from 'lucide-react';
 import type {Project,Instance,Lang,ApiSettings} from '../model';
 type Action={id:string;name:string;status:string;result?:string};
@@ -42,13 +43,6 @@ export default function Assistant({project,instance,nodeId,lang,onClose,onSource
   catch(error){setConnection('failed');const text=(error as Error).message;setMessages(old=>{const next=[...old],last=next.length-1;next[last]={...next[last],text:[next[last].text,text].filter(Boolean).join('\n\n'),error:true};return next;});}
   finally{setBusy(false);}
  }
- function answer(value:string):ReactNode{
-  const files=Object.keys(project.files).sort((a,b)=>b.length-a.length);if(!files.length)return value;
-  const pattern=new RegExp(`(${files.map(file=>file.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')}):(\\d+)`,'g');
-  const parts:ReactNode[]=[];let last=0;
-  for(const match of value.matchAll(pattern)){parts.push(value.slice(last,match.index));parts.push(<button className="citation" key={match.index} onClick={()=>onSource(match[1],Number(match[2]))}>{match[0]}</button>);last=match.index!+match[0].length;}
-  parts.push(value.slice(last));return parts;
- }
  function actionName(name:string){const names:Record<string,[string,string]>={list_files:['查看工程文件','List project files'],read_file:['读取文件','Read file'],write_file:['写入场景文件','Write scene file'],simulators:['检测仿真器','Discover simulators'],run_simulation:['运行仿真','Run simulation'],open_waveform:['打开波形','Open waveform'],inspect_waveform:['读取波形数值','Inspect waveform'],read_waveform_view:['读取当前游标','Read waveform cursor']};return names[name]?.[lang==='zh'?0:1]||name;}
  function actions(message:Message){return message.actions?.map(action=><details className={`assistant-tool ${action.status}`} key={action.id}><summary>{actionName(action.name)} · {action.status==='running'?(lang==='zh'?'进行中':'Running'):action.status==='cancelled'?(lang==='zh'?'已取消':'Cancelled'):action.status==='error'?(lang==='zh'?'失败':'Failed'):(lang==='zh'?'完成':'Done')}</summary>{action.result&&<><pre>{action.result}</pre>{(()=>{try{const result=JSON.parse(action.result);const file=result.path||result.file;return file&&project.files[file]!==undefined?<button className="citation" onClick={()=>onSource(file,1)}>{file}</button>:null;}catch{return null;}})()}</>}</details>);}
  return <section className="assistant-panel" aria-label={t.title}>
@@ -62,7 +56,7 @@ export default function Assistant({project,instance,nodeId,lang,onClose,onSource
    <label className="api-stream"><input type="checkbox" checked={stream} onChange={event=>setStream(event.target.checked)}/>{t.stream}</label>
    <div className="api-settings-actions"><button type="submit" className="api-save">{saving?t.saving:t.save}</button><button type="button" onClick={()=>save(true)}>{saving?t.testing:t.test}</button>{saved&&<button type="button" onClick={async()=>{const result=await window.atlas?.forgetAssistant();if(result?.ok){setSaved(null);setApiKey('');setMessages([]);setNotice('');}else setNotice(result?.error||t.browser);}}>{t.forget}</button>}</div><p>{t.format}</p><p>{t.keyHelp}</p><p>{t.billing}</p></fieldset>
   </form>}
-  <div className="assistant-messages" ref={messageList} onScroll={event=>{const list=event.currentTarget;followLatest.current=list.scrollHeight-list.scrollTop-list.clientHeight<48;setReadingEarlier(!followLatest.current);}}>{messages.map((message,index)=><div className={`message ${message.role} ${message.error?'has-error':''}`} key={index}><small>{message.role==='user'?t.user:saved?.model||'AI'}{message.context&&<code title={message.context}>{message.context.split('.').slice(-2).join('.')}</code>}</small><div>{message.text?answer(message.text):message.actions?.length?'':t.answering}</div>{actions(message)}</div>)}</div>
+  <div className="assistant-messages" ref={messageList} onScroll={event=>{const list=event.currentTarget;followLatest.current=list.scrollHeight-list.scrollTop-list.clientHeight<48;setReadingEarlier(!followLatest.current);}}>{messages.map((message,index)=><div className={`message ${message.role} ${message.error?'has-error':''}`} key={index}><small>{message.role==='user'?t.user:saved?.model||'AI'}{message.context&&<code title={message.context}>{message.context.split('.').slice(-2).join('.')}</code>}</small><div>{message.text?(message.role==='assistant'?<MarkdownMessage value={message.text} files={Object.keys(project.files)} onSource={onSource}/>:message.text):message.actions?.length?'':t.answering}</div>{actions(message)}</div>)}</div>
   {readingEarlier&&!settings&&<button className="assistant-latest" onClick={latest}>{lang==='zh'?'回到最新':'Jump to latest'}</button>}
   {notice&&<div className="assistant-notice" role="status">{notice}</div>}
   <div className="assistant-compose"><textarea aria-label={t.question} placeholder={t.question} value={question} onChange={event=>setQuestion(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();send();}}}/><div className="compose-foot">{busy?<button onClick={()=>window.atlas?.cancel()}><Square size={12}/>{t.stop}</button>:<button className="send-button" disabled={!question.trim()||!usable(saved)||saving||loading} onClick={send}>{t.send}<ArrowUp size={13}/></button>}</div></div>

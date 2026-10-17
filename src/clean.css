@@ -62,3 +62,18 @@
 .welcome-card h1{font-size:32px;font-weight:500;letter-spacing:-1px;margin:0;color:#26364d}
 .welcome-actions{display:flex;gap:12px}.welcome-actions button{height:42px;padding:0 22px;font-size:13px;border-radius:8px}
 .welcome-example{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #d8e0eb;color:#445b79;cursor:pointer}.welcome-example:hover{background:#f5f8fd;border-color:#a8bfdc}
+
+.message.assistant>div{white-space:normal}
+.markdown-message{min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.75}
+.markdown-message>:first-child{margin-top:0}.markdown-message>:last-child{margin-bottom:0}
+.markdown-message p{margin:0 0 12px}
+.markdown-message h1,.markdown-message h2,.markdown-message h3,.markdown-message h4,.markdown-message h5,.markdown-message h6{font-weight:600;color:#2e4869;line-height:1.5;margin:20px 0 10px}
+.markdown-message h1{font-size:18px}.markdown-message h2{font-size:16px}.markdown-message h3{font-size:14px}.markdown-message h4,.markdown-message h5,.markdown-message h6{font-size:12px}
+.markdown-message strong{font-weight:650}.markdown-message ul,.markdown-message ol{margin:8px 0 14px;padding-left:24px}.markdown-message li{display:list-item;margin:4px 0}.markdown-message li>p{margin:4px 0}
+.markdown-message blockquote{margin:12px 0;padding:3px 12px;border-left:3px solid #c5d9f4;color:#637d9d;background:#f7faff}.markdown-message blockquote p:last-child{margin-bottom:0}
+.markdown-message code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.93em;background:#f0f4fa;color:#365a88;border-radius:4px;padding:2px 4px}
+.markdown-message pre{margin:12px 0;padding:12px;border:1px solid #dce5f1;border-radius:6px;background:#f7f9fc;overflow-x:auto;white-space:pre;line-height:1.65}
+.markdown-message pre code{padding:0;background:transparent;border-radius:0;white-space:pre;overflow-wrap:normal}
+.markdown-message a{color:#0765ee;text-decoration:underline}.markdown-message .citation{text-align:left;max-width:100%;overflow-wrap:anywhere}
+.markdown-table-scroll{max-width:100%;overflow-x:auto;margin:12px 0}.markdown-message table{width:100%;border-collapse:collapse;font-size:inherit}.markdown-message th,.markdown-message td{border:1px solid #dce5f1;padding:7px 10px;text-align:left;vertical-align:top;min-width:64px}.markdown-message th{background:#f2f6fc;font-weight:600}.markdown-message tr:nth-child(even){background:#fafcff}
+.markdown-message hr{border:0;border-top:1px solid #dce5f1;margin:16px 0}.markdown-message .task-list-item{list-style:none}.markdown-message .task-list-item input{margin-right:6px}

@@ -126,7 +126,7 @@ v0.2 UI changes: remove default history, path cards, repetitive hints and summar
 - 支持 OpenAI 兼容的 Chat Completions 接口；可以填写 base URL 或完整 `/chat/completions` 地址。非兼容协议需要适配，当前不直接支持 Anthropic 原生 Messages API。
 - DeepSeek 预设为 `https://api.deepseek.com`、`deepseek-flash`；OpenAI 预设为 `https://api.openai.com/v1`，模型由用户填写。兼容网关和本地服务也可自定义。HTTP 仅允许本机回环地址，远程服务使用 HTTPS。
 - API Key 由 Electron safeStorage 使用系统密钥存储加密，保存到应用用户数据目录的 `api-settings.json`，不会回传明文密钥；系统加密不可用时不保存明文密钥。留空仅保留同一地址已保存的密钥；切换地址不会携带旧密钥。
-- 支持流式与非流式回答、连续追问、停止、清空对话及源码引用跳转。保存配置和切换工程会重置上下文。保存配置不发模型请求；实际提问使用 API 服务商额度，独立于 ChatGPT 订阅。
+- 支持流式与非流式回答、连续追问、停止、清空对话及源码引用跳转。AI 回答按 Markdown 显示标题、加粗、列表、引用、表格与代码块；源码引用（含行内代码和 Markdown 链接）可点击定位。代码块保持原文，原始 HTML 不执行，远程图片不自动加载。保存配置和切换工程会重置上下文。保存配置不发模型请求；实际提问使用 API 服务商额度，独立于 ChatGPT 订阅。
 - 用户发送时才将所选实例、参数、相关连接和源码片段发往配置的服务。主进程通过 Electron 网络层发送请求，界面不直接访问 API。支持标准 function/tool calls 的模型可使用受限工程工具读取文件、写入场景、运行本地仿真和打开波形；不提供任意 shell 工具。
 - 本版不需要 Codex CLI，也不使用 Codex 登录或额度。
 
