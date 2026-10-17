@@ -13,7 +13,7 @@ module tb;
  initial begin
   $dumpfile("waves.vcd");$dumpvars(0,tb);
   tick();tick();rst_n=1;
-  
+
  tx_data=8'hA5;tx_valid=1;check(tx_ready,"TX ready");tick();tx_valid=0;
  n=0;while(!rx_valid && n<120)begin tick();n=n+1;end
  check(rx_valid && rx_data==8'hA5,"8N1 loopback A5");

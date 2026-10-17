@@ -13,7 +13,7 @@ module tb;
  initial begin
   $dumpfile("waves.vcd");$dumpvars(0,tb);
   tick();tick();rst_n=1;
-  
+
  start=1;tick();start=0;check(busy,"start accepted");stall=1;n=0;
  while(!write_valid && n<10)begin tick();n=n+1;end check(write_valid,"read latency reached write stage");
  repeat(3)begin tick();check(busy && transferred==0,"write stalls do not count");end

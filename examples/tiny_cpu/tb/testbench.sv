@@ -13,7 +13,7 @@ module tb;
  initial begin
   $dumpfile("waves.vcd");$dumpvars(0,tb);
   tick();tick();rst_n=1;
-  
+
  n=0;while(!halted && n<100)begin tick();n=n+1;end
  check(halted,"program halts");check(accumulator==10 && counter==0 && result==10,"sum 4+3+2+1 stored");
  check(branches==3 && retired==16 && pc==6,"branch and retire counts");

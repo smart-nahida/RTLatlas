@@ -13,7 +13,7 @@ module tb;
  initial begin
   $dumpfile("waves.vcd");$dumpvars(0,tb);
   tick();tick();rst_n=1;
-  
+
  in_valid=1;in_data=1;tick();check(out_valid && out_data==1,"FIR sample 1");in_data=2;tick();check(out_data==4,"FIR sample 2");
  out_ready=0;in_data=3;repeat(3)begin tick();check(!in_ready && out_valid && out_data==4,"stall preserves output and history");end
  out_ready=1;tick();check(out_data==8,"resume FIR sample 3");in_data=4;tick();check(out_data==12,"FIR sample 4");

@@ -13,7 +13,7 @@ module tb;
  initial begin
   $dumpfile("waves.vcd");$dumpvars(0,tb);
   tick();tick();rst_n=1;
-  
+
  command=16'h8300 | 16'h00A5;start=1;tick();start=0;n=0;while(!done && n<100)begin tick();n=n+1;end check(done && !busy && cs_n,"write completes");
  tick();command=16'h0300;start=1;tick();start=0;n=0;while(!done && n<100)begin tick();n=n+1;end check(done && response[7:0]==8'hA5,"read address 3");
  tick();command=16'h843C;start=1;tick();start=0;n=0;while(!done && n<100)begin tick();n=n+1;end check(done,"second write");

@@ -13,7 +13,7 @@ module tb;
  initial begin
   $dumpfile("waves.vcd");$dumpvars(0,tb);
   tick();tick();rst_n=1;
-  
+
  in_valid=1;in_data=8'h10;in_last=0;tick();check(out0_valid && out0_data==8'h10 && !out0_last,"header routes to port zero");
  in_data=8'h23;in_last=1;tick(); // odd payload still belongs to port zero.
  in_data=8'h11;in_last=0;tick();check(out1_valid && out1_data==8'h11,"other port independent");
