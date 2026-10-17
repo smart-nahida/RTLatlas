@@ -8,7 +8,6 @@ A local bilingual SystemVerilog explorer with API-assisted teaching simulation.
 v0.3.0 contains real elaboration, a focused three-pane reader, configurable API assistance, and dialogue-driven waveform simulation.
 - 已实现：真实 RTL 展开、实例层级、模块 / 逻辑块依赖图、源码定位、端口和实际参数、同层信号追踪、搜索、中英文切换。
 - 内置工程由同一个 pyslang 解析器生成：30 个展开实例，包含 generate、FIFO、乘法器与累加器。
-- 离线 HTML 预览不随源码目录保留；如有需要可运行 `npm run preview:export` 重新生成。本地工程导入使用桌面版。
 - 0.3.0 已在 Apple Silicon / macOS 26.5 本机构建 DMG/ZIP，验证镜像校验和、应用签名及打包后的 API→TB→真实仿真→波形链路。Intel 和其他 macOS 版本没有本机实测。
 
 ## 在 Mac 上启动 / Run on Mac
@@ -95,7 +94,6 @@ slang 负责语法、类型、名字解析、参数求值和 elaboration；图�
 npm test                 # Node process tests + real pyslang tests
 npm run test:ui          # TypeScript production build + headless browser interaction checks
 npm run parser:bundle    # Standalone native parser for the current host
-npm run preview:export   # Export one self-contained offline HTML preview
 ```
 
 For UI checks, first install a matching browser with `npx playwright install chromium --only-shell`.
@@ -110,13 +108,6 @@ For UI checks, first install a matching browser with `npx playwright install chr
 UI build uses local fonts and assets; no CDN dependency. React Flow, React, Electron, pyslang/slang and other dependencies retain their respective licenses. Noto Sans SC is distributed under SIL Open Font License; its license is included by the font package. The application code is MIT licensed.
 
 Reference documentation: [slang](https://sv-lang.com/user-manual.html), [Electron 44 platform support](https://www.electronjs.org/blog/electron-44-0), [macOS runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
-
-
-## 从 v0.1 更新
-
-解压 `RTL-Atlas-v0.2-Update.zip`，先关闭旧软件，再运行外层的 `Apply-Update-Mac.command`。默认更新 `~/Desktop/rtl-atlas`，会备份被替换的源码，保留 `node_modules`、`.venv`、用户工程配置，完成后启动新版。可把工程目录作为第一个参数传入。原文件位于工程内的 `update-backups/时间戳/`。
-
-v0.2 UI changes: remove default history, path cards, repetitive hints and summary cards; clearly separated sidebar / graph / source panes; display options moved to a menu; full-height source with ports and parameters tabs; unchanged font families.
 
 
 ## AI 阅读助手 / Configurable API assistant

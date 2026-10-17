@@ -19,7 +19,6 @@
     "parser:bundle": "python3 -m PyInstaller --clean --noconfirm --onedir --name rtl-parser --collect-all pyslang --distpath build/parser --workpath build/pyinstaller backend/parse_rtl.py",
     "dist:mac": "npm run build && npm run parser:bundle && electron-builder --mac dmg zip --publish never",
     "dist:dir": "npm run build && electron-builder --dir --publish never",
-    "preview:export": "npm run build && node scripts/export-preview.mjs",
     "test:startup": "npm run build && node scripts/startup-check.mjs"
   },
   "dependencies": {
