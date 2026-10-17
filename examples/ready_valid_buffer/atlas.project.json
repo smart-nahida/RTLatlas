@@ -1,0 +1,9 @@
+{
+  "name": "ready_valid_buffer",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

@@ -1,0 +1,9 @@
+{
+  "name": "counter",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

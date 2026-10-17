@@ -1,0 +1,9 @@
+{
+  "name": "clock_divider",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

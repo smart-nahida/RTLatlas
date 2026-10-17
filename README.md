@@ -1,14 +1,14 @@
-# RTL Atlas · RTL 阅读看板 v0.2
+# RTL Atlas · RTL 阅读与波形工作台 v0.3.0
 
 A local bilingual SystemVerilog explorer with API-assisted teaching simulation.
 面向阅读陌生 RTL 的本地桌面软件，中英文切换；RTL 源码只读，AI 可创建和修改独立仿真场景。
 
 ## 当前交付 / Delivery status
 
-v0.2 contains real elaboration, a focused three-pane reader, and configurable API assistance.
+v0.3.0 contains real elaboration, a focused three-pane reader, configurable API assistance, and dialogue-driven waveform simulation.
 - 已实现：真实 RTL 展开、实例层级、模块 / 逻辑块依赖图、源码定位、端口和实际参数、同层信号追踪、搜索、中英文切换。
 - 内置工程由同一个 pyslang 解析器生成：30 个展开实例，包含 generate、FIFO、乘法器与累加器。
-- `RTL-Atlas-Preview.html` 是可以双击打开的离线交互预览。它只能探索内置工程；本地工程导入使用桌面版。
+- 离线 HTML 预览不随源码目录保留；如有需要可运行 `npm run preview:export` 重新生成。本地工程导入使用桌面版。
 - 0.3.0 已在 Apple Silicon / macOS 26.5 本机构建 DMG/ZIP，验证镜像校验和、应用签名及打包后的 API→TB→真实仿真→波形链路。Intel 和其他 macOS 版本没有本机实测。
 
 ## 在 Mac 上启动 / Run on Mac
@@ -44,7 +44,7 @@ npm run dist:mac
 
 该命令会把 pyslang 和 Python 打包为本地解析器，再生成 `release/` 下的 `.dmg` 和 `.zip`。安装后的应用不需要用户安装 Python 或 Node。RTL 解析在本机执行；可选 AI 助手通过用户配置的 API 提问。
 
-默认按当前机器架构构建。Apple Silicon 和 Intel 必须分别在相应架构的 Mac 上构建，不能把 ARM 解析器放进 x64 应用。提供 `.github/workflows/mac.yml` 分别使用 ARM64 和 Intel Mac runner。可手动构建；推送与 package.json 版本一致的 v* 标签会构建双架构 DMG/ZIP，校验后生成 GitHub Release 草稿。确认草稿后发布即可供下载；已发布的同版本资产不会被工作流自动覆盖。仓库尚未关联，也未上传或触发云端构建。
+默认按当前机器架构构建。Apple Silicon 和 Intel 必须分别在相应架构的 Mac 上构建，不能把 ARM 解析器放进 x64 应用。提供 `.github/workflows/mac.yml` 分别使用 ARM64 和 Intel Mac runner。可手动构建；推送与 package.json 版本一致的 v* 标签会构建双架构 DMG/ZIP，校验后生成 GitHub Release 草稿。确认草稿后发布即可供下载；已发布的同版本资产不会被工作流自动覆盖。源码已公开到 [smart-nahida/RTLatlas](https://github.com/smart-nahida/RTLatlas)，目前未发布安装包或触发云端构建。
 
 The build uses ad-hoc signing, not an Apple Developer ID or notarization. Public distribution requires your own signing/notarization setup. macOS runtime, native dialogs and Gatekeeper behavior still require testing on actual Macs. Requires macOS 13 Ventura or later (Electron 44); ARM64 and x64 builds are separate.
 
@@ -105,7 +105,7 @@ For UI checks, first install a matching browser with `npx playwright install chr
 - `electron/main.cjs`, `preload.cjs`: isolated Electron window and narrow IPC API.
 - `src/components`: graph, hierarchy and source viewer.
 - `src/i18n.ts`: Chinese / English UI strings.
-- `examples/vector_accelerator`: real demonstration source and config.
+- `examples/`: [10 个独立教学工程与原有加速器示例](examples/README.md)，包含工程配置、自检 TB、仿真配置与运行说明。
 
 UI build uses local fonts and assets; no CDN dependency. React Flow, React, Electron, pyslang/slang and other dependencies retain their respective licenses. Noto Sans SC is distributed under SIL Open Font License; its license is included by the font package. The application code is MIT licensed.
 

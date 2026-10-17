@@ -1,0 +1,9 @@
+{
+  "name": "simple_ram",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

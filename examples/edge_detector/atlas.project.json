@@ -1,0 +1,9 @@
+{
+  "name": "edge_detector",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

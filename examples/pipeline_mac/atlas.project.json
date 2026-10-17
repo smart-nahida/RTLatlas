@@ -1,0 +1,9 @@
+{
+  "name": "pipeline_mac",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

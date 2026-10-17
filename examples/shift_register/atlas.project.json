@@ -1,0 +1,9 @@
+{
+  "name": "shift_register",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

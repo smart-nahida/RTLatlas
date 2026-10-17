@@ -1,0 +1,9 @@
+{
+  "name": "sync_fifo",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

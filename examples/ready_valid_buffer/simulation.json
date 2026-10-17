@@ -1,0 +1,12 @@
+{
+  "engine": "iverilog",
+  "top": "tb",
+  "sources": [
+    "rtl/design.sv",
+    "tb/testbench.sv"
+  ],
+  "waveform": "waves.vcd",
+  "timeoutSeconds": 10,
+  "dutPath": "tb.dut",
+  "instanceId": "top"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "pwm",
+  "top": "top",
+  "files": [
+    "rtl/design.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}
