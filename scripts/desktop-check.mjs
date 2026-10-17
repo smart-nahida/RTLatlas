@@ -25,6 +25,15 @@ try{
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
  await page.locator('.app').waitFor();
+ assert.equal(await page.locator('.react-flow__node').count(),0,'startup must not automatically load a project');
+ for(const result of await page.evaluate(async()=>[await window.atlas.reload(),await window.atlas.importWaveform(),await window.atlas.ask({question:'hello',lang:'en',instanceId:'top',nodeId:null})])){assert.equal(result.ok,false);assert.match(result.error,/Open a project first/);}
+ await app.evaluate(({dialog})=>{globalThis.originalOpenDialog=dialog.showOpenDialog;dialog.showOpenDialog=async()=>({canceled:true,filePaths:[]});});
+ await page.getByRole('button',{name:/^(打开工程|Open project)$/}).click();
+ assert.equal(await page.locator('.react-flow__node').count(),0,'cancelling open must leave the workspace empty');
+ await app.evaluate(({dialog})=>{dialog.showOpenDialog=globalThis.originalOpenDialog;delete globalThis.originalOpenDialog;});
+ await page.reload();await page.locator('.app').waitFor();assert.equal(await page.locator('.react-flow__node').count(),0,'reloading must not open a demo');
+ await page.getByRole('button',{name:/^(导入与使用|Import & help)$/}).click();
+ await page.getByRole('button',{name:/^(打开示例|Open example)$/}).click();
  assert.ok(await app.evaluate(({Menu})=>Menu.getApplicationMenu().items.some(item=>item.submenu?.items.some(child=>child.role==='paste'))),'native Edit menu must provide Paste');
  await page.locator('.react-flow__node').first().waitFor();
  await page.getByRole('button',{name:/^(显示选项|Display options)$/}).click();
@@ -101,7 +110,7 @@ try{
  await page.getByRole('textbox',{name:'API base URL',exact:true}).fill(`http://127.0.0.1:${server.address().port}/v1`);
  await page.getByRole('textbox',{name:'Model ID',exact:true}).fill('fixture-model');
  await app.evaluate(async({clipboard,ClipboardItem})=>{
-  globalThis.atlasClipboardBackup=await Promise.all((await clipboard.read()).map(async item=>new ClipboardItem(Object.fromEntries(await Promise.all(item.types.map(async type=>[type,await item.getType(type)]))))));
+  globalThis.atlasClipboardBackup=await Promise.all((await clipboard.read()).filter(item=>item.types.length>0).map(async item=>new ClipboardItem(Object.fromEntries(await Promise.all(item.types.map(async type=>[type,await item.getType(type)]))))));
   await clipboard.writeText('fixture-api-key');
  });
  try{

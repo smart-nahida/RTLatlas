@@ -23,7 +23,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));let app;
 try{
  app=await electron.launch({...process.env.ATLAS_PACKAGED_EXECUTABLE?{executablePath:process.env.ATLAS_PACKAGED_EXECUTABLE,args:[]}:{args:['.']},env:{...process.env,RTL_ATLAS_PYTHON:process.env.RTL_ATLAS_PYTHON||path.resolve('.venv/bin/python')}});if(process.env.ATLAS_PACKAGED_EXECUTABLE)assert.equal(await app.evaluate(({app})=>app.isPackaged),true);await app.evaluate(({app},dir)=>app.setPath('userData',dir),path.join(folder,'userData'));
  await app.evaluate(({dialog},dir)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[dir]});},root);
- const page=await app.firstWindow(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.locator('.react-flow__node').first().waitFor();
+ const page=await app.firstWindow(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.locator('.app').waitFor();assert.equal(await page.locator('.react-flow__node').count(),0);await page.getByRole('button',{name:/^(导入与使用|Import & help)$/}).click();await page.getByRole('button',{name:/^(打开示例|Open example)$/}).click();await page.locator('.react-flow__node').first().waitFor();
  await page.getByRole('button',{name:'EN',exact:true}).click();await page.getByRole('button',{name:'Open project',exact:true}).click();await expect(page.locator('.project-name')).toHaveAttribute('title',await fs.realpath(root));
  const selected=page.locator('.react-flow__node').filter({has:page.locator('header strong',{hasText:'u_accumulator'})});await selected.click();
  await page.getByRole('button',{name:'AI reading assistant',exact:true}).click();

@@ -9,11 +9,16 @@ const errors=[];page.on('pageerror',error=>errors.push(error.message));
 await fs.mkdir('artifacts',{recursive:true});
 try{
  await page.goto(url);
+ assert.equal(await page.locator('.react-flow__node').count(),0,'startup must not automatically load a project');
+ await page.getByRole('button',{name:/^(导入与使用|Import & help)$/}).click();
+ await page.getByRole('button',{name:/^(打开示例|Open example)$/}).click();
  await page.locator('.react-flow__node').first().waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(200);await page.screenshot({path:'artifacts/v02-initial.png'});
  assert.ok(await page.locator('.react-flow__node').count()>=6,'real example nodes rendered');
  await page.getByRole('button',{name:'EN',exact:true}).click();
  assert.equal(await page.locator('.section-label').first().textContent(),'Modules');
  await page.reload();await page.getByRole('button',{name:'Open project',exact:true}).waitFor();
+ assert.equal(await page.locator('.react-flow__node').count(),0,'reload must start without a project');
+ await page.getByRole('button',{name:'Import & help',exact:true}).click();await page.getByRole('button',{name:'Open example',exact:true}).click();
  const accumulator=page.locator('.react-flow__node').filter({has:page.locator('header strong',{hasText:'u_accumulator'})});
  assert.equal(await page.locator('.reading-history,.path-panel,.selection-details,.graph-options').count(),0,'default UI hides supplementary panels and hints');
  assert.equal(await page.locator('.wordmark').textContent(),'RTL Atlas');

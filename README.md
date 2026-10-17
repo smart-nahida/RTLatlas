@@ -182,3 +182,5 @@ API 连接验证：官方 DeepSeek/OpenAI 地址必须填写 API Key。保存配
 公开仓库：[smart-nahida/RTLatlas](https://github.com/smart-nahida/RTLatlas)。项目根目录即仓库根目录（package.json 与 .github/ 在同一级）。未来发布先更新 package.json/package-lock.json 版本，提交后推送同名标签，例如 v0.3.1；GitHub Actions 自动构建 ARM64/Intel 安装包并创建 Release 草稿。手动 workflow_dispatch 仅生成 Actions 构建产物，不发布 Release。
 
 自动构建不等于应用内自动更新。目前应用未接入更新器，也没有 Apple Developer ID / 公证；未来要自动下载安装，需配置 GitHub 更新源、正式签名/公证和 electron-updater。API 设置与工程生成目录被排除在源码仓库之外。
+
+应用启动时保持空工作区，不自动打开示例或上次工程。点击“打开工程”选择目录；需要示例时，从“导入与使用”中选择“打开示例”。

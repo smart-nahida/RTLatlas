@@ -6,8 +6,29 @@ import Hierarchy,{type Reading} from './components/Hierarchy';import CircuitGrap
 const demo=demoData as Project;
 function initialScope(p:Project){return Object.values(p.instances).find(i=>i.module==='core'&&i.id.includes('[2]'))?.id||p.roots[0];}
 export default function App(){
+ const [project,setProject]=useState<Project|null>(null);
+ const [lang,setLang]=useState<Lang>(()=>localStorage.getItem('atlas-language')==='en'?'en':'zh'),[help,setHelp]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');const t=text(lang);
+ useEffect(()=>{localStorage.setItem('atlas-language',lang);document.documentElement.lang=lang==='zh'?'zh-CN':'en';},[lang]);
+ async function open(kind:'open'|'demo'){
+  setBusy(true);setError('');try{
+   if(!window.atlas){if(kind==='demo')setProject(demo);else setError(t.desktopOnly);return;}
+   const result=await(kind==='open'?window.atlas.openProject():window.atlas.demo());if(!result.ok)throw Error(result.error);if(result.value)setProject({...result.value,demo:kind==='demo'});
+  }catch(e){setError((e as Error).message);}finally{setBusy(false);}
+ }
+ if(project)return <ProjectWorkspace initialProject={project}/>;
+ return <div className={`app clean-ui ${window.atlas?.platform==='darwin'?'is-mac':''}`}>
+  <header className="topbar"><div className="wordmark">RTL <span>Atlas</span></div><div style={{flex:1}}/>
+   <div className="top-actions"><div className="language-switch" aria-label="Language"><button className={lang==='zh'?'active':''} onClick={()=>setLang('zh')}>中文</button><button className={lang==='en'?'active':''} onClick={()=>setLang('en')}>EN</button></div><button className="icon-button" title={t.help} aria-label={t.help} onClick={()=>setHelp(true)}><HelpCircle size={17}/></button><button className="open-button" disabled={busy} onClick={()=>open('open')}><FolderOpen size={16}/>{t.import}</button></div>
+  </header>
+  {error&&<div className="error-banner" role="alert"><AlertCircle size={15}/><span>{error}</span><button aria-label={t.close} onClick={()=>setError('')}><X size={15}/></button></div>}
+  <main style={{flex:1,minHeight:0}}/>
+  <footer className="statusbar"><div><span className="status-dot"/>{busy?t.loading:t.ready}</div></footer>
+  {help&&<div className="modal-backdrop" onClick={()=>setHelp(false)}><section className="modal" role="dialog" aria-modal="true" aria-label={t.helpTitle} onClick={e=>e.stopPropagation()}><header><h2>{t.helpTitle}</h2><button aria-label={t.close} onClick={()=>setHelp(false)}><X size={19}/></button></header><p>{t.helpBody}</p><button className="open-button" disabled={busy} onClick={()=>open('demo')}><FolderOpen size={14}/>{t.demoAction}</button></section></div>}
+ </div>;
+}
+function ProjectWorkspace({initialProject}:{initialProject:Project}){
  const [lang,setLang]=useState<Lang>(()=>localStorage.getItem('atlas-language')==='en'?'en':'zh'),t=text(lang);
- const [project,setProject]=useState<Project>(demo),[current,setCurrent]=useState(initialScope(demo)),[selectedNode,setSelectedNode]=useState<string|null>(initialScope(demo)+'.u_accumulator'),[selectedEdge,setSelectedEdge]=useState<string|null>(null),[tab,setTab]=useState('code'),[mode,setMode]=useState('structure');
+ const [project,setProject]=useState<Project>(initialProject),[current,setCurrent]=useState(initialScope(initialProject)),[selectedNode,setSelectedNode]=useState<string|null>(initialScope(initialProject)+'.u_accumulator'),[selectedEdge,setSelectedEdge]=useState<string|null>(null),[tab,setTab]=useState('code'),[mode,setMode]=useState('structure');
  const [clock,setClock]=useState(false),[control,setControl]=useState(true),[boundary,setBoundary]=useState(false),[trace,setTrace]=useState<Set<string>|null>(null),[traceDirection,setTraceDirection]=useState('');
  const [history,setHistory]=useState<Reading[]>([]),[query,setQuery]=useState(''),[searchFocus,setSearchFocus]=useState(false),[help,setHelp]=useState(false),[diagnostics,setDiagnostics]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[wide,setWide]=useState(false),[sourceOverride,setSourceOverride]=useState<Source|null>(null);
  const [options,setOptions]=useState(false),[sidebarOpen,setSidebarOpen]=useState(true),[sourceMenu,setSourceMenu]=useState(false);

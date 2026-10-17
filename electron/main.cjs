@@ -19,7 +19,8 @@ function handle(channel,fn){ipcMain.handle(channel,async(event,...args)=>{
 });}
 handle('project:open',async()=>{const selected=await dialog.showOpenDialog(win,{title:'Open RTL project / 打开 RTL 工程',properties:['openDirectory']});return selected.canceled?null:load(selected.filePaths[0]);});
 handle('project:demo',async()=>load(await demoRoot()));
-handle('project:reload',async()=>load(project?.root||await demoRoot()));
+handle('project:reload',async()=>{requireProject();return load(project.root);});
+function requireProject(){if(!project)throw Error('Open a project first / 请先打开工程');}
 function idle(){if(assistant.busy)throw Error('Stop the current question first / 请先停止问答');}
 handle('assistant:settings',()=>settings().public());
 handle('assistant:save',input=>{idle();const config=settings().save(input);assistant.configure(config);return settings().public();});
@@ -27,14 +28,14 @@ handle('assistant:test',async()=>{idle();if(!assistant.config){const config=sett
 handle('assistant:forget',()=>{idle();settings().clear();assistant.config=null;assistant.resetConversation();return true;});
 handle('assistant:ask',async payload=>{
  if(!payload||typeof payload.question!=='string'||!payload.question.trim()||payload.question.length>16000||!['zh','en'].includes(payload.lang))throw Error('Invalid question / 问题无效');
- if(projectBusy)throw Error('Project is loading / 工程正在载入');if(!project)await load(await demoRoot());
+ if(projectBusy)throw Error('Project is loading / 工程正在载入');requireProject();
  if(!assistant.config){const config=settings().load();if(!config)throw Error('Configure an API first / 请先配置 API');assistant.configure(config);}
  return assistant.ask({scope:project.root,context:buildContext(project,payload.instanceId,payload.nodeId,payload.lang),question:payload.question,lang:payload.lang,tools:projectTools});
 });
-handle('waveform:open',async payload=>{idle();if(!project)await load(await demoRoot());return projectTools.open(payload.path,payload.binding);});
+handle('waveform:open',async payload=>{idle();requireProject();return projectTools.open(payload.path,payload.binding);});
 handle('waveform:view',payload=>{projectTools?.setView(payload);return true;});
 handle('waveform:import',async()=>{
- idle();if(!project)await load(await demoRoot());
+ idle();requireProject();
  const selected=await dialog.showOpenDialog(win,{title:'Open waveform / 打开波形',properties:['openFile'],filters:[{name:'VCD',extensions:['vcd']}]});if(selected.canceled)return null;
  const source=selected.filePaths[0],stat=await fs.stat(source);if(!stat.isFile()||stat.size>32*1024*1024)throw Error('VCD size limit (32 MiB)');
  const text=await fs.readFile(source,'utf8');const {parseVcd}=await import('../shared/waveform.mjs');parseVcd(text);
