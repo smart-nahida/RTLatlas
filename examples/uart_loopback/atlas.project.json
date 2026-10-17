@@ -1,0 +1,12 @@
+{
+  "name": "uart_loopback",
+  "top": "top",
+  "files": [
+    "rtl/top.sv",
+    "rtl/uart_tx.sv",
+    "rtl/uart_rx.sv",
+    "rtl/byte_buffer.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

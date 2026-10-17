@@ -1,0 +1,14 @@
+{
+  "name": "tiny_cpu",
+  "top": "top",
+  "files": [
+    "rtl/top.sv",
+    "rtl/program_rom.sv",
+    "rtl/cpu_control.sv",
+    "rtl/register_file.sv",
+    "rtl/cpu_alu.sv",
+    "rtl/data_memory.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

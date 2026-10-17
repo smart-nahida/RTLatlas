@@ -105,7 +105,7 @@ For UI checks, first install a matching browser with `npx playwright install chr
 - `electron/main.cjs`, `preload.cjs`: isolated Electron window and narrow IPC API.
 - `src/components`: graph, hierarchy and source viewer.
 - `src/i18n.ts`: Chinese / English UI strings.
-- `examples/`: [10 个独立教学工程与原有加速器示例](examples/README.md)，包含工程配置、自检 TB、仿真配置与运行说明。
+- `examples/`: [10 个基础工程、6 个进阶工程与原有加速器示例](examples/README.md)，包含工程配置、自检 TB、仿真配置与运行说明。
 
 UI build uses local fonts and assets; no CDN dependency. React Flow, React, Electron, pyslang/slang and other dependencies retain their respective licenses. Noto Sans SC is distributed under SIL Open Font License; its license is included by the font package. The application code is MIT licensed.
 
@@ -183,4 +183,6 @@ API 连接验证：官方 DeepSeek/OpenAI 地址必须填写 API Key。保存配
 
 自动构建不等于应用内自动更新。目前应用未接入更新器，也没有 Apple Developer ID / 公证；未来要自动下载安装，需配置 GitHub 更新源、正式签名/公证和 electron-updater。API 设置与工程生成目录被排除在源码仓库之外。
 
-应用启动时保持空工作区，不自动打开示例或上次工程。点击“打开工程”选择目录；需要示例时，从“导入与使用”中选择“打开示例”。
+应用启动时显示简洁欢迎页，提供“打开工程”和“打开示例”入口，不自动加载工程。工程选择框记住上次选择的目录，重启后仍保留；目录被删除时退回最近存在的父目录。波形选择框单独记忆上次目录，第一次从当前工程目录开始。目录偏好只存于应用用户数据目录。
+
+启动页与目录记忆回归：`npm run test:startup`。测试验证手动打开、取消、工程选择框位置、跨应用重启保留和波形目录回退。

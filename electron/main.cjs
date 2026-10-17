@@ -2,6 +2,9 @@ const {app,BrowserWindow,dialog,ipcMain,Menu,net,safeStorage}=require('electron'
 const path=require('node:path');
 const {AssistantClient}=require('./assistant.cjs');const {AssistantSettings}=require('./assistant-settings.cjs');const {buildContext}=require('./context.cjs');
 const {parseProject}=require('./project.cjs');
+const {ProjectLocation}=require('./project-location.cjs');
+const location=kind=>new ProjectLocation(path.join(app.getPath('userData'),kind+'-location.json'));
+function rememberLocation(kind,directory){try{location(kind).save(directory);}catch{ /* A preference write must not prevent opening a project. */ }}
 const fs=require('node:fs/promises');const {ProjectTools,projectPath}=require('./project-tools.cjs');
 let win,project=null,projectTools=null,projectBusy=false;
 function sendEvent(event){if(win&&!win.isDestroyed())win.webContents.send('assistant:event',event);}
@@ -17,7 +20,7 @@ function handle(channel,fn){ipcMain.handle(channel,async(event,...args)=>{
  if(!win||event.sender!==win.webContents||event.senderFrame!==win.webContents.mainFrame)throw Error('Invalid IPC sender');
  try{return {ok:true,value:await fn(...args)};}catch(e){return {ok:false,error:e.message};}
 });}
-handle('project:open',async()=>{const selected=await dialog.showOpenDialog(win,{title:'Open RTL project / 打开 RTL 工程',properties:['openDirectory']});return selected.canceled?null:load(selected.filePaths[0]);});
+handle('project:open',async()=>{const selected=await dialog.showOpenDialog(win,{title:'Open RTL project / 打开 RTL 工程',defaultPath:location('project').read(),properties:['openDirectory']});if(selected.canceled)return null;rememberLocation('project',selected.filePaths[0]);return load(selected.filePaths[0]);});
 handle('project:demo',async()=>load(await demoRoot()));
 handle('project:reload',async()=>{requireProject();return load(project.root);});
 function requireProject(){if(!project)throw Error('Open a project first / 请先打开工程');}
@@ -36,8 +39,8 @@ handle('waveform:open',async payload=>{idle();requireProject();return projectToo
 handle('waveform:view',payload=>{projectTools?.setView(payload);return true;});
 handle('waveform:import',async()=>{
  idle();requireProject();
- const selected=await dialog.showOpenDialog(win,{title:'Open waveform / 打开波形',properties:['openFile'],filters:[{name:'VCD',extensions:['vcd']}]});if(selected.canceled)return null;
- const source=selected.filePaths[0],stat=await fs.stat(source);if(!stat.isFile()||stat.size>32*1024*1024)throw Error('VCD size limit (32 MiB)');
+ const selected=await dialog.showOpenDialog(win,{title:'Open waveform / 打开波形',defaultPath:location('waveform').read()||project.root,properties:['openFile'],filters:[{name:'VCD',extensions:['vcd']}]});if(selected.canceled)return null;
+ const source=selected.filePaths[0];rememberLocation('waveform',path.dirname(source));const stat=await fs.stat(source);if(!stat.isFile()||stat.size>32*1024*1024)throw Error('VCD size limit (32 MiB)');
  const text=await fs.readFile(source,'utf8');const {parseVcd}=await import('../shared/waveform.mjs');parseVcd(text);
  const relative=`.rtl-atlas/sim/imported/wave-${Date.now()}.vcd`,target=await projectPath(project.root,relative,{create:true});await fs.writeFile(target,text,{flag:'wx',mode:0o600});return projectTools.open(relative);
 });

@@ -1,0 +1,11 @@
+{
+  "name": "packet_router",
+  "top": "top",
+  "files": [
+    "rtl/top.sv",
+    "rtl/packet_classifier.sv",
+    "rtl/packet_fifo.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

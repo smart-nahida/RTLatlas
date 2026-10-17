@@ -1,0 +1,15 @@
+{
+  "engine": "iverilog",
+  "top": "tb",
+  "sources": [
+    "rtl/top.sv",
+    "rtl/delay_line.sv",
+    "rtl/fir_dot.sv",
+    "rtl/output_stage.sv",
+    "tb/testbench.sv"
+  ],
+  "waveform": "waves.vcd",
+  "timeoutSeconds": 10,
+  "dutPath": "tb.dut",
+  "instanceId": "top"
+}

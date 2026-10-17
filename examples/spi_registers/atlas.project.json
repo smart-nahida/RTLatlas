@@ -1,0 +1,12 @@
+{
+  "name": "spi_registers",
+  "top": "top",
+  "files": [
+    "rtl/top.sv",
+    "rtl/spi_master.sv",
+    "rtl/spi_slave.sv",
+    "rtl/register_bank.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

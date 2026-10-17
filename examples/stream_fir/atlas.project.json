@@ -1,0 +1,12 @@
+{
+  "name": "stream_fir",
+  "top": "top",
+  "files": [
+    "rtl/top.sv",
+    "rtl/delay_line.sv",
+    "rtl/fir_dot.sv",
+    "rtl/output_stage.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

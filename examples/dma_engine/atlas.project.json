@@ -1,0 +1,11 @@
+{
+  "name": "dma_engine",
+  "top": "top",
+  "files": [
+    "rtl/top.sv",
+    "rtl/dma_controller.sv",
+    "rtl/teaching_memory.sv"
+  ],
+  "includeDirs": [],
+  "defines": []
+}

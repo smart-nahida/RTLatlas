@@ -5,7 +5,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
 from parse_rtl import parse_project
 ROOT = Path(__file__).resolve().parents[1]
 NAMES = ['counter', 'clock_divider', 'shift_register', 'pwm', 'edge_detector',
-         'sync_fifo', 'pipeline_mac', 'ready_valid_buffer', 'traffic_light', 'simple_ram']
+         'sync_fifo', 'pipeline_mac', 'ready_valid_buffer', 'traffic_light', 'simple_ram', 'uart_loopback', 'spi_registers', 'stream_fir',
+         'packet_router', 'dma_engine', 'tiny_cpu']
 
 class TeachingExamplesTest(unittest.TestCase):
     def test_projects_elaborate_without_testbench_roots(self):
@@ -15,6 +16,8 @@ class TeachingExamplesTest(unittest.TestCase):
                 self.assertEqual(project['roots'], ['top'])
                 self.assertGreater(len(project['instances']['top']['graph']['nodes']), 0)
                 self.assertNotIn('tb', project['instances'])
+                if name in NAMES[-6:]:
+                    self.assertGreaterEqual(len(project['instances']), 4, 'advanced examples need real module hierarchy')
 
     @unittest.skipUnless(shutil.which('iverilog') and shutil.which('vvp'), 'Icarus Verilog required')
     def test_real_simulations_pass_and_produce_vcd(self):
